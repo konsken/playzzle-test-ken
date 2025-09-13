@@ -3,11 +3,14 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { getUnlockedPuzzles } from '@/app/puzzles/actions';
+import { getAuthenticatedUser } from '@/lib/firebase/server-auth';
 import type { PuzzleDetails } from './actions';
 
 export async function getUnlockedPuzzleDetails(userId: string): Promise<PuzzleDetails[]> {
-    const unlockedIds = await getUnlockedPuzzles(userId);
+    const user = await getAuthenticatedUser();
+    // Use the authenticated user's data directly
+    const unlockedIds = user?.uid === userId ? user.unlockedPuzzleIds : [];
+
     if (unlockedIds.length === 0) {
         return [];
     }

@@ -161,21 +161,6 @@ export async function recordTransaction(data: TransactionData) {
 }
 
 
-export async function getUnlockedPuzzles(userId: string): Promise<string[]> {
-    console.log('[SERVER ACTION] getUnlockedPuzzles');
-    try {
-        const db = getFirestore(app);
-        const snapshot = await db.collection('unlockedPuzzles').where('userId', '==', userId).get();
-        if (snapshot.empty) {
-            return [];
-        }
-        return snapshot.docs.map(doc => doc.data().puzzleId as string);
-    } catch (error) {
-        console.error("Error fetching unlocked puzzles: ", error);
-        return [];
-    }
-}
-
 export type PuzzleDetails = {
     src: string;
     category: string;
@@ -243,33 +228,6 @@ export async function getTransactions(userId: string): Promise<GetTransactionsRe
     }
 }
 
-
-export async function getUserProStatus(userId: string): Promise<{ isPro: boolean }> {
-    console.log('[SERVER ACTION] getUserProStatus');
-    try {
-        const db = getFirestore(app);
-        const userDoc = await db.collection('users').doc(userId).get();
-        if (!userDoc.exists) {
-            return { isPro: false };
-        }
-        
-        const userData = userDoc.data();
-        const proMembership = userData?.proMembership;
-
-        if (proMembership && (proMembership.status === 'active' || proMembership.status === 'cancelled')) {
-            const expiryDate = proMembership.expiresAt.toDate();
-            if (expiryDate > new Date()) {
-                return { isPro: true };
-            }
-        }
-
-        return { isPro: false };
-    } catch (error) {
-        console.error("Error fetching user pro status:", error);
-        return { isPro: false };
-    }
-}
-
 export type SubscriptionDetails = {
     planId: 'monthly_pro' | 'yearly_pro' | null;
     status: 'active' | 'expired' | 'none' | 'cancelled';
@@ -316,33 +274,6 @@ export async function getSubscriptionDetails(userId: string): Promise<Subscripti
     };
 }
 
-
-export async function getSinglePuzzleCredits(userId: string): Promise<{ count: number, transactionIds: string[] }> {
-    console.log('[SERVER ACTION] getSinglePuzzleCredits');
-    try {
-        const db = getFirestore(app);
-        const query = db.collection('transactions')
-            .where('userId', '==', userId)
-            .where('planId', '==', 'single_puzzle')
-            .where('status', '==', 'success')
-            .where('creditUsed', '==', false);
-
-        const snapshot = await query.get();
-        if (snapshot.empty) {
-            return { count: 0, transactionIds: [] };
-        }
-
-        const transactionIds = snapshot.docs.map(doc => doc.id);
-        return { count: snapshot.size, transactionIds };
-    } catch (error: any) {
-        if (error.code === 9 || (error.code === 'FAILED_PRECONDITION' && error.message.includes('index'))) {
-            console.warn("Firestore index for single puzzle credit query is missing.");
-        } else {
-            console.error("Error fetching single puzzle credits: ", error);
-        }
-        return { count: 0, transactionIds: [] };
-    }
-}
 
 export async function useSinglePuzzleCredit(transactionId: string, puzzleId: string, category: string): Promise<{ success: boolean, message: string }> {
     console.log('[SERVER ACTION] useSinglePuzzleCredit');
@@ -422,22 +353,6 @@ export async function getFirestoreUser(uid: string) {
     } catch (error) {
         console.error("Error fetching Firestore user:", error);
         return null;
-    }
-}
-
-// Wishlist Actions
-export async function getWishlist(userId: string): Promise<string[]> {
-    console.log('[SERVER ACTION] getWishlist');
-    try {
-        const db = getFirestore(app);
-        const wishlistDoc = await db.collection('wishlists').doc(userId).get();
-        if (wishlistDoc.exists) {
-            return wishlistDoc.data()?.puzzles || [];
-        }
-        return [];
-    } catch (error) {
-        console.error("Error fetching wishlist: ", error);
-        return [];
     }
 }
 

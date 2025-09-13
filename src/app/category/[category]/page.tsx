@@ -4,7 +4,6 @@ import path from 'path';
 import { notFound } from 'next/navigation';
 import { PuzzlesGrid } from './puzzles-grid';
 import { getAuthenticatedUser } from '@/lib/firebase/server-auth';
-import { getSinglePuzzleCredits, getUserProStatus, getUnlockedPuzzles, getWishlist } from '@/app/account/actions';
 import type { UserDataState } from '@/app/puzzles/page';
 
 type CategoryPageProps = {
@@ -67,14 +66,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     const user = await getAuthenticatedUser();
     const isSuperAdmin = !!user?.customClaims?.superadmin;
     
-    // Fetch all user data ONCE on the server
-    const [puzzles, proStatus, unlocked, credits, wish] = await Promise.all([
-        getPuzzlesForCategory(decodedCategory, isSuperAdmin),
-        user ? getUserProStatus(user.uid) : Promise.resolve({ isPro: false }),
-        user ? getUnlockedPuzzles(user.uid) : Promise.resolve([]),
-        user ? getSinglePuzzleCredits(user.uid) : Promise.resolve({ count: 0, transactionIds: [] }),
-        user ? getWishlist(user.uid) : Promise.resolve([])
-    ]);
+    const puzzles = await getPuzzlesForCategory(decodedCategory, isSuperAdmin);
 
     if (puzzles.length === 0 && !isSuperAdmin) {
         const categoryDir = path.join(process.cwd(), 'public', 'puzzles', decodedCategory);
@@ -83,12 +75,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         }
     }
     
-    // Pass all user data as props to the client component
     const userData: UserDataState = user ? {
-        isPro: proStatus.isPro,
-        unlockedPuzzleIds: unlocked,
-        singlePurchaseCredits: credits,
-        wishlist: wish,
+        isPro: user.isPro,
+        unlockedPuzzleIds: user.unlockedPuzzleIds,
+        singlePurchaseCredits: user.singlePurchaseCredits,
+        wishlist: user.wishlist,
     } : null;
     
   return (

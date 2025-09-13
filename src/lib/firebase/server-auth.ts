@@ -3,7 +3,7 @@ import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import type { DecodedIdToken } from 'firebase-admin/auth';
 import { cookies } from 'next/headers';
 import { app as adminApp } from './admin-config';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
 export type AuthenticatedUser = {
   uid: string;
@@ -11,8 +11,11 @@ export type AuthenticatedUser = {
   name: string | null;
   picture: string | null;
   customClaims?: { [key: string]: any };
-  proTier?: string;
+  isPro: boolean;
   proExpiry?: string | null;
+  unlockedPuzzleIds: string[];
+  singlePurchaseCredits: { count: number; transactionIds: string[] };
+  wishlist: string[];
 };
 
 
@@ -26,19 +29,46 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
     const decodedIdToken: DecodedIdToken = await getAdminAuth(adminApp).verifySessionCookie(sessionCookie, true);
     const { uid, email, name, picture, ...customClaims } = decodedIdToken;
     
-    // Fetch pro status from Firestore only once during session verification
+    // Fetch all user-related data in one go
     const db = getFirestore(adminApp);
-    const userDoc = await db.collection('users').doc(uid).get();
-    let proTier, proExpiry;
+    const userDocRef = db.collection('users').doc(uid);
+    const unlockedPuzzlesRef = db.collection('unlockedPuzzles').where('userId', '==', uid);
+    const creditsRef = db.collection('transactions').where('userId', '==', uid).where('planId', '==', 'single_puzzle').where('status', '==', 'success').where('creditUsed', '==', false);
+    const wishlistRef = db.collection('wishlists').doc(uid);
 
+    const [userDoc, unlockedSnapshot, creditsSnapshot, wishlistDoc] = await Promise.all([
+        userDocRef.get(),
+        unlockedPuzzlesRef.get(),
+        creditsRef.get(),
+        wishlistRef.get()
+    ]);
+    
+    // Process Pro Status
+    let isPro = false;
+    let proExpiry = null;
     if (userDoc.exists) {
         const userData = userDoc.data();
         const proMembership = userData?.proMembership;
-        if (proMembership && proMembership.expiresAt) {
-            proTier = proMembership.planId;
+        if (proMembership && proMembership.status === 'active' && proMembership.expiresAt?.toDate() > new Date()) {
+            isPro = true;
             proExpiry = proMembership.expiresAt.toDate().toISOString();
         }
     }
+    if (customClaims?.superadmin) {
+        isPro = true;
+    }
+    
+    // Process Unlocked Puzzles
+    const unlockedPuzzleIds = unlockedSnapshot.empty ? [] : unlockedSnapshot.docs.map(doc => doc.data().puzzleId as string);
+    
+    // Process Credits
+    const singlePurchaseCredits = {
+        count: creditsSnapshot.size,
+        transactionIds: creditsSnapshot.docs.map(doc => doc.id)
+    };
+
+    // Process Wishlist
+    const wishlist = wishlistDoc.exists ? (wishlistDoc.data()?.puzzles || []) : [];
 
     return {
       uid,
@@ -46,8 +76,11 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
       name: name || null,
       picture: picture || null,
       customClaims,
-      proTier,
+      isPro,
       proExpiry,
+      unlockedPuzzleIds,
+      singlePurchaseCredits,
+      wishlist
     };
   } catch (error) {
     // Session cookie is invalid. Force user to login again.

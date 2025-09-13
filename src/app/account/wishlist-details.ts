@@ -3,11 +3,14 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { getWishlist } from '@/app/puzzles/actions';
+import { getAuthenticatedUser } from '@/lib/firebase/server-auth';
 import type { PuzzleDetails } from './actions';
 
 export async function getWishlistDetails(userId: string): Promise<PuzzleDetails[]> {
-    const wishlistIds = await getWishlist(userId);
+    const user = await getAuthenticatedUser();
+    // Use the authenticated user's data directly
+    const wishlistIds = user?.uid === userId ? user.wishlist : [];
+    
     if (wishlistIds.length === 0) {
         return [];
     }

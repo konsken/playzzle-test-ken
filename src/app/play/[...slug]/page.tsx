@@ -1,6 +1,5 @@
 
 import DynamicPuzzleGame from '@/components/dynamic-puzzle-game';
-import { getUnlockedPuzzles, getUserProStatus } from '@/app/account/actions';
 import { getAuthenticatedUser } from '@/lib/firebase/server-auth';
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
@@ -66,31 +65,20 @@ export default async function PlayPage({ params }: PlayPageProps) {
   
   const isProPuzzle = imageFilename.toLowerCase().includes('_pro');
   
-  // Fetch all data concurrently
   const [user, { mobilePlayEnabled }] = await Promise.all([
     getAuthenticatedUser(),
     getSiteSettings()
   ]);
 
-  // If it's a pro puzzle, we must perform security checks.
   if (isProPuzzle) {
     if (!user) {
       redirect('/login?from=/membership');
     }
 
-    const isSuperAdmin = !!user.customClaims?.superadmin;
-    // Don't waste reads if user is already an admin
-    if (!isSuperAdmin) {
-       // Fetch pro-related data only when necessary
-      const [{ isPro }, unlockedPuzzles] = await Promise.all([
-          getUserProStatus(user.uid),
-          getUnlockedPuzzles(user.uid)
-      ]);
-      const isUnlocked = isPro || unlockedPuzzles.includes(imageFilename);
+    const isUnlocked = user.isPro || user.unlockedPuzzleIds.includes(imageFilename);
 
-      if (!isUnlocked) {
-        redirect('/membership');
-      }
+    if (!isUnlocked) {
+      redirect('/membership');
     }
   }
 

@@ -2,7 +2,7 @@
 import HomePage from '@/components/home-page';
 import { getCategories } from './actions';
 import { getAuthenticatedUser } from '@/lib/firebase/server-auth';
-import { getSinglePuzzleCredits, getUserProStatus, getUnlockedPuzzles, getWishlist } from '@/app/account/actions';
+import type { AuthenticatedUser } from '@/lib/firebase/server-auth';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -67,26 +67,19 @@ async function getPuzzlesForCategories(categories: {name: string, displayOrder: 
 
 
 export default async function PuzzlesPage() {
-  const user = await getAuthenticatedUser();
-  const isSuperAdmin = !!user?.customClaims?.superadmin;
-
-  // Fetch all user data ONCE on the server
-  const [categories, proStatus, unlocked, credits, wish] = await Promise.all([
-    getCategories(),
-    user ? getUserProStatus(user.uid) : Promise.resolve({ isPro: false }),
-    user ? getUnlockedPuzzles(user.uid) : Promise.resolve([]),
-    user ? getSinglePuzzleCredits(user.uid) : Promise.resolve({ count: 0, transactionIds: [] }),
-    user ? getWishlist(user.uid) : Promise.resolve([])
+  const [user, categories] = await Promise.all([
+      getAuthenticatedUser(),
+      getCategories()
   ]);
+  const isSuperAdmin = !!user?.customClaims?.superadmin;
   
   const categoriesWithPuzzles = await getPuzzlesForCategories(categories);
 
-  // Pass all user data as props to the client component
   const userData: UserDataState = user ? {
-    isPro: proStatus.isPro,
-    unlockedPuzzleIds: unlocked,
-    singlePurchaseCredits: credits,
-    wishlist: wish,
+    isPro: user.isPro,
+    unlockedPuzzleIds: user.unlockedPuzzleIds,
+    singlePurchaseCredits: user.singlePurchaseCredits,
+    wishlist: user.wishlist,
   } : null;
 
   return (

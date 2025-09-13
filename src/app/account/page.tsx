@@ -1,5 +1,4 @@
 
-
 // src/app/account/page.tsx
 import { getAuthenticatedUser } from '@/lib/firebase/server-auth';
 import { redirect } from 'next/navigation';
@@ -9,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TransactionHistory } from './transaction-history';
 import { UnlockedPuzzles } from './unlocked-puzzles';
 import { SubscriptionManager } from './subscription-details';
-import { getFirestoreUser, getUserProStatus, getSinglePuzzleCredits, getSolvedPuzzleHistory } from './actions';
+import { getFirestoreUser, getSolvedPuzzleHistory } from './actions';
 import { Wishlist } from './wishlist';
 import { SolvedPuzzles } from './solved-puzzles';
 import { getSiteSettings } from '../super-admin/settings/actions';
@@ -24,19 +23,14 @@ export default async function AccountPage() {
         redirect('/login');
     }
     
-    // Fetch all necessary data on the server
     const [
         firestoreUser, 
-        { isPro }, 
         { trophyRoomIsPro }, 
-        puzzleCredits,
         solvedPuzzlesResult
     ] = await Promise.all([
         getFirestoreUser(user.uid),
-        getUserProStatus(user.uid),
         getSiteSettings(),
-        getSinglePuzzleCredits(user.uid),
-        getSolvedPuzzleHistory(user.uid) // Fetch solved puzzles here
+        getSolvedPuzzleHistory(user.uid)
     ]);
 
     const isSuperAdmin = !!user.customClaims?.superadmin;
@@ -44,7 +38,6 @@ export default async function AccountPage() {
     let firstName = firestoreUser?.firstName || '';
     let lastName = firestoreUser?.lastName || '';
     
-    // Fallback to displayName if Firestore fields are not set
     if (!firstName && user.name) {
         const nameParts = user.name.trim().split(' ').filter(part => part.length > 0);
         firstName = nameParts[0] || '';
@@ -58,7 +51,7 @@ export default async function AccountPage() {
         lastName,
     };
 
-    const canAccessTrophyRoom = isSuperAdmin || isPro || !trophyRoomIsPro;
+    const canAccessTrophyRoom = isSuperAdmin || user.isPro || !trophyRoomIsPro;
 
     return (
         <div className="container mx-auto py-8 px-4">
@@ -105,7 +98,7 @@ export default async function AccountPage() {
                                <SubscriptionManager userId={user.uid} />
                             </CardContent>
                         </Card>
-                         <CreditsDisplay creditCount={puzzleCredits.count} />
+                         <CreditsDisplay creditCount={user.singlePurchaseCredits.count} />
                     </div>
                 </TabsContent>
                 <TabsContent value="transactions">
