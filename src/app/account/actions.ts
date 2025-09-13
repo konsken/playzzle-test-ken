@@ -630,3 +630,5 @@ export async function getSolvedPuzzleHistory(
         return { puzzles: [], error: { code: 'UNKNOWN', message: 'An unexpected error occurred.'} };
     }
 }
+
+    

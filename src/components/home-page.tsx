@@ -193,8 +193,6 @@ export default function HomePage({ categories: initialCategories, isSuperAdmin, 
     initialCategories.slice(0, INITIAL_CATEGORIES)
   );
   
-  // The daily puzzle check is now triggered on the server in the page component.
-  // This useEffect can be kept for client-side-only effects if needed in the future.
   useEffect(() => {
     async function dailyCheck() {
         await checkAndReleaseDailyPuzzle();
@@ -245,7 +243,6 @@ export default function HomePage({ categories: initialCategories, isSuperAdmin, 
     )
   }
 
-  // User data is now passed directly as props, no client-side fetching needed.
   const userProps = {
     user,
     isSuperAdmin,
@@ -306,3 +303,5 @@ export default function HomePage({ categories: initialCategories, isSuperAdmin, 
     </div>
   );
 }
+
+    

@@ -209,7 +209,6 @@ const JigsawGame = forwardRef<GameActionsHandle, JigsawGameProps>(({
         } else {
             setGameState('ready');
         }
-        hasRecordedCompletion.current = false;
     }, [imageSrc, gridSize, imageSize, resetTimer, startTimer]);
 
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -230,6 +229,7 @@ const JigsawGame = forwardRef<GameActionsHandle, JigsawGameProps>(({
     };
     
     const startGame = useCallback(() => {
+        hasRecordedCompletion.current = false; // Reset completion flag only on a new game start
         createPuzzle(true);
     }, [createPuzzle]);
 
@@ -706,7 +706,7 @@ const JigsawGame = forwardRef<GameActionsHandle, JigsawGameProps>(({
                         </div>
                     )}
                     <DialogFooter className="sm:justify-center flex-col sm:flex-row gap-2">
-                        <Button onClick={handleDialogClose} className="w-full sm:w-auto">Play Again</Button>
+                        <Button onClick={startGame} className="w-full sm:w-auto">Play Again</Button>
                          <Button asChild variant="outline" className="w-full sm:w-auto">
                            <Link href="/puzzles">More Puzzles</Link>
                         </Button>
@@ -719,7 +719,7 @@ const JigsawGame = forwardRef<GameActionsHandle, JigsawGameProps>(({
                           />
                         }
                         <DialogClose asChild>
-                            <Button type="button" variant="secondary" className="w-full sm:w-auto">
+                            <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={handleDialogClose}>
                                 Close
                             </Button>
                         </DialogClose>
@@ -731,3 +731,5 @@ const JigsawGame = forwardRef<GameActionsHandle, JigsawGameProps>(({
 });
 JigsawGame.displayName = "JigsawGame";
 export default JigsawGame;
+
+    

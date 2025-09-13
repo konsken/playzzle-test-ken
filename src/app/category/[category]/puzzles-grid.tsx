@@ -48,3 +48,5 @@ export function PuzzlesGrid({ initialPuzzles, user, isSuperAdmin, initialUserDat
         </div>
     );
 }
+
+    

@@ -172,11 +172,11 @@ const PiczzleGame = forwardRef<GameActionsHandle, PiczzleGameProps>(({
         setMoves(0);
         resetTimer();
         setGameState('ready');
-        hasRecordedCompletion.current = false;
     }, [getSolvedState, updatePuzzleSize, resetTimer, imageSrc, imageSize.width]);
     
     const startGame = useCallback(() => {
         if (!imageSrc || !imageSize.width || !puzzleContainerRef.current) return;
+        hasRecordedCompletion.current = false; // Reset completion flag only on a new game start
         updatePuzzleSize();
         const solvedState = getSolvedState();
         
@@ -190,7 +190,6 @@ const PiczzleGame = forwardRef<GameActionsHandle, PiczzleGameProps>(({
         resetTimer();
         startTimer();
         setGameState('playing');
-        hasRecordedCompletion.current = false;
     }, [getSolvedState, isSolvable, resetTimer, startTimer, imageSrc, imageSize.width, updatePuzzleSize]);
 
     const stopGame = useCallback(() => {
@@ -343,7 +342,7 @@ const PiczzleGame = forwardRef<GameActionsHandle, PiczzleGameProps>(({
             />
         );
       });
-    }, [pieces, gridSize, imageSrc, pieceWidth, pieceHeight, puzzleDimension.width, puzzleDimension.height, gameState, emptyPiece, handlePieceClick]);
+    }, [pieces, gridSize, imageSrc, pieceWidth, pieceHeight, puzzleDimension.width, puzzleDimension.height, gameState, emptyPiece]);
 
 
     const handlePreviewMouseDown = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
@@ -610,7 +609,7 @@ const PiczzleGame = forwardRef<GameActionsHandle, PiczzleGameProps>(({
                         </div>
                     )}
                     <DialogFooter className="sm:justify-center flex-col sm:flex-row gap-2">
-                        <Button onClick={handleDialogClose} className="w-full sm:w-auto">Play Again</Button>
+                        <Button onClick={startGame} className="w-full sm:w-auto">Play Again</Button>
                         <Button asChild variant="outline" className="w-full sm:w-auto">
                            <Link href="/puzzles">More Puzzles</Link>
                         </Button>
@@ -623,7 +622,7 @@ const PiczzleGame = forwardRef<GameActionsHandle, PiczzleGameProps>(({
                           />
                         }
                         <DialogClose asChild>
-                           <Button type="button" variant="secondary" className="w-full sm:w-auto">
+                           <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={handleDialogClose}>
                              Close
                            </Button>
                         </DialogClose>
@@ -635,3 +634,5 @@ const PiczzleGame = forwardRef<GameActionsHandle, PiczzleGameProps>(({
 });
 PiczzleGame.displayName = "PiczzleGame";
 export default PiczzleGame;
+
+    
