@@ -25,13 +25,14 @@ export default async function AccountPage() {
     
     const [
         firestoreUser, 
-        { trophyRoomIsPro }, 
+        settings, 
         solvedPuzzlesResult
     ] = await Promise.all([
         getFirestoreUser(user.uid),
         getSiteSettings(),
         getSolvedPuzzleHistory(user.uid)
     ]);
+    const { trophyRoomIsPro } = settings;
 
     const isSuperAdmin = !!user.customClaims?.superadmin;
     

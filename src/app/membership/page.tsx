@@ -23,9 +23,12 @@ function formatPrice(priceInPaise: number) {
 
 
 export default async function MembershipPage() {
-    const user = await getAuthenticatedUser();
-    const subscriptionPlans = await getMembershipPlans();
-    const { interestFormEnabled } = await getSiteSettings();
+    const [user, subscriptionPlans, settings] = await Promise.all([
+        getAuthenticatedUser(),
+        getMembershipPlans(),
+        getSiteSettings()
+    ]);
+    const { interestFormEnabled } = settings;
 
     return (
         <div className="container mx-auto py-12 px-4">

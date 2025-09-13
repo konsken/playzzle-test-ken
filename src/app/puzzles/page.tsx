@@ -1,4 +1,5 @@
 
+
 import HomePage from '@/components/home-page';
 import { getCategories } from './actions';
 import { getAuthenticatedUser } from '@/lib/firebase/server-auth';
