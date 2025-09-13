@@ -1,0 +1,22 @@
+# See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+
+# Allow all friendly bots
+User-agent: *
+Allow: /
+Allow: /puzzles
+Allow: /category/
+Allow: /contact
+Allow: /terms-of-service
+Allow: /privacy-policy
+Allow: /refund-policy
+Allow: /shipping-policy
+Allow: /membership
+
+# Disallow crawling of user-specific, admin, and game play pages
+Disallow: /account
+Disallow: /dashboard
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /super-admin
+Disallow: /play/
