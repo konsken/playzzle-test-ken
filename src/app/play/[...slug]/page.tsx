@@ -65,8 +65,12 @@ export default async function PlayPage({ params }: PlayPageProps) {
   const slug = `${category}/${imageFilename}`;
   
   const isProPuzzle = imageFilename.toLowerCase().includes('_pro');
-  const user = await getAuthenticatedUser();
-  const { mobilePlayEnabled } = await getSiteSettings();
+  
+  // Fetch all data concurrently
+  const [user, { mobilePlayEnabled }] = await Promise.all([
+    getAuthenticatedUser(),
+    getSiteSettings()
+  ]);
 
   // If it's a pro puzzle, we must perform security checks.
   if (isProPuzzle) {
@@ -77,8 +81,11 @@ export default async function PlayPage({ params }: PlayPageProps) {
     const isSuperAdmin = !!user.customClaims?.superadmin;
     // Don't waste reads if user is already an admin
     if (!isSuperAdmin) {
-      const { isPro } = await getUserProStatus(user.uid);
-      const unlockedPuzzles = await getUnlockedPuzzles(user.uid);
+       // Fetch pro-related data only when necessary
+      const [{ isPro }, unlockedPuzzles] = await Promise.all([
+          getUserProStatus(user.uid),
+          getUnlockedPuzzles(user.uid)
+      ]);
       const isUnlocked = isPro || unlockedPuzzles.includes(imageFilename);
 
       if (!isUnlocked) {
