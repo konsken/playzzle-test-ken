@@ -67,10 +67,10 @@ function CategoryCarousel({ category, puzzles, ...rest }: { category: string, pu
             className="w-full"
         >
             <CarouselContent>
-                {puzzles.length > 0 ? puzzles.map((image) => (
+                {puzzles.length > 0 ? puzzles.map((image, index) => (
                     <CarouselItem key={image.filename} className="md:basis-1/3 lg:basis-1/5">
                         <div className="p-1">
-                            <PuzzleCard image={image} {...rest} />
+                            <PuzzleCard image={image} priority={index < 3} {...rest} />
                         </div>
                     </CarouselItem>
                 )) : (

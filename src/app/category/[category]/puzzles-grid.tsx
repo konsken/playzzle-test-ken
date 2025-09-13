@@ -40,10 +40,11 @@ export function PuzzlesGrid({ initialPuzzles, user, isSuperAdmin, initialUserDat
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {initialPuzzles.map((image) => (
+            {initialPuzzles.map((image, index) => (
                 <PuzzleCard
                     key={image.filename}
                     image={image}
+                    priority={index < 10}
                     {...userProps}
                 />
             ))}

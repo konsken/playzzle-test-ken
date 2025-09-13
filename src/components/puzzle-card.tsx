@@ -42,6 +42,7 @@ type PuzzleCardProps = {
   user: AuthenticatedUser | null;
   singlePurchaseCredits: { count: number; transactionIds: string[] };
   wishlist: string[];
+  priority?: boolean;
 };
 
 export default function PuzzleCard({
@@ -52,6 +53,7 @@ export default function PuzzleCard({
   user,
   singlePurchaseCredits,
   wishlist,
+  priority = false,
 }: PuzzleCardProps) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
@@ -155,6 +157,7 @@ export default function PuzzleCard({
           src={image.src}
           alt={`Puzzle ${image.filename}`}
           fill
+          priority={priority}
           className="object-cover transition-transform group-hover:scale-105"
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
           data-ai-hint="puzzle nature"
