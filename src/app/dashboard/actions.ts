@@ -19,24 +19,11 @@ export async function recordGameCompletion(event: Omit<GameHistoryEvent, 'uid' |
         return { success: false };
     }
     
-    const isSuperAdmin = !!user.customClaims?.superadmin;
-
+    // The decision to record history should not depend on user status here.
+    // Access to VIEW the history (the Trophy Room) is gated on the /account page.
+    // This simplifies the logic and reduces server load on game completion.
+    
     try {
-        // If the user is an admin, they can always record their history.
-        if (!isSuperAdmin) {
-            const { trophyRoomIsPro } = await getSiteSettings();
-            
-            // If the trophy room is a pro feature, we need to check the user's status.
-            if (trophyRoomIsPro) {
-                const { isPro } = await getUserProStatus(user.uid);
-                
-                // If it's a pro feature and the user is not pro, don't record the score.
-                if (!isPro) {
-                    return { success: false };
-                }
-            }
-        }
-        
         const db = getFirestore(app);
         const historyRef = db.collection('gameHistory');
         
