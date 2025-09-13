@@ -16,7 +16,7 @@ import type { AuthenticatedUser } from '@/lib/firebase/server-auth';
 import PuzzleCard from './puzzle-card';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { AdminControls } from './admin-controls';
-import { renameCategory, deleteCategory, checkAndReleaseDailyPuzzle } from '@/app/puzzles/actions';
+import { renameCategory, deleteCategory } from '@/app/puzzles/actions';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -194,13 +194,6 @@ export default function HomePage({ categories: initialCategories, isSuperAdmin, 
   const [visibleCategories, setVisibleCategories] = useState(
     initialCategories.slice(0, INITIAL_CATEGORIES)
   );
-  
-  useEffect(() => {
-    async function dailyCheck() {
-        await checkAndReleaseDailyPuzzle();
-    }
-    dailyCheck();
-  }, []); 
 
   const handleScroll = useCallback(() => {
     if (window.innerHeight + document.documentElement.scrollTop < document.documentElement.offsetHeight - 500) {
