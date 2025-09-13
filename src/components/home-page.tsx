@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Carousel,
@@ -11,7 +11,7 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import { Button } from './ui/button';
-import { ArrowRight, Loader2, Pencil, Trash2 } from 'lucide-react';
+import { ArrowRight, Pencil, Trash2 } from 'lucide-react';
 import type { AuthenticatedUser } from '@/lib/firebase/server-auth';
 import PuzzleCard from './puzzle-card';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
@@ -187,6 +187,8 @@ function CategoryAdminActions({ category, onRename, onDelete }: { category: stri
     )
 }
 
+// This is now a "dumb" component that just receives data.
+// It no longer fetches any data on its own, preventing loops.
 export default function HomePage({ categories: initialCategories, isSuperAdmin, user, initialUserData }: HomePageProps) {
   const [allCategories, setAllCategories] = useState(initialCategories);
   const [visibleCategories, setVisibleCategories] = useState(
@@ -276,6 +278,7 @@ export default function HomePage({ categories: initialCategories, isSuperAdmin, 
         </div>
         <div className="lg:col-span-3 space-y-8">
           {visibleCategories.map((category) => (
+              (category.puzzles.length > 0 || isSuperAdmin) && (
               <div key={category.name} id={category.name} className="scroll-mt-20 relative">
                 <div className="flex justify-between items-center mb-4">
                    <h2 className="text-2xl font-bold capitalize">{formatCategoryName(category.name)}</h2>
@@ -290,6 +293,7 @@ export default function HomePage({ categories: initialCategories, isSuperAdmin, 
                 </div>
                 <CategoryCarousel category={category.name} puzzles={category.puzzles} {...userProps} />
               </div>
+              )
             ))
           }
            {allCategories.length === 0 && isSuperAdmin && (
@@ -303,5 +307,4 @@ export default function HomePage({ categories: initialCategories, isSuperAdmin, 
     </div>
   );
 }
-
     

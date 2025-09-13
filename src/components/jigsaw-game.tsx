@@ -253,7 +253,10 @@ const JigsawGame = forwardRef<GameActionsHandle, JigsawGameProps>(({
         start: startGame,
         stop: stopGame,
         pause: handlePause,
-        restart: () => createPuzzle(true),
+        restart: () => {
+             hasRecordedCompletion.current = false;
+             createPuzzle(true)
+        },
     }));
     
     useEffect(() => {
@@ -394,21 +397,23 @@ const JigsawGame = forwardRef<GameActionsHandle, JigsawGameProps>(({
 
 
     useEffect(() => {
-        if (gameState === 'playing' && pieces.length > 0 && pieces.every(p => p.isPlaced) && !hasRecordedCompletion.current) {
-            hasRecordedCompletion.current = true; // Set flag immediately
-            setGameState('solved');
-            stopTimer();
-            updateBestTime(timeInSeconds);
-            setMotivationalMessage(motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)]);
-            if (slug && imageFilename) {
-                recordGameCompletion({
-                    puzzleSlug: slug,
-                    category: slug.split('/')[0],
-                    gameType: 'jigsaw',
-                    difficulty: gridSize,
-                    timeInSeconds: timeInSeconds,
-                    moves: moves,
-                });
+        if (gameState === 'playing' && pieces.length > 0 && pieces.every(p => p.isPlaced)) {
+            if (!hasRecordedCompletion.current) {
+                hasRecordedCompletion.current = true; // Set flag immediately
+                setGameState('solved');
+                stopTimer();
+                updateBestTime(timeInSeconds);
+                setMotivationalMessage(motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)]);
+                if (slug && imageFilename) {
+                    recordGameCompletion({
+                        puzzleSlug: slug,
+                        category: slug.split('/')[0],
+                        gameType: 'jigsaw',
+                        difficulty: gridSize,
+                        timeInSeconds: timeInSeconds,
+                        moves: moves,
+                    });
+                }
             }
         }
     }, [pieces, gameState, stopTimer, updateBestTime, timeInSeconds, slug, imageFilename, gridSize, moves]);
@@ -710,7 +715,7 @@ const JigsawGame = forwardRef<GameActionsHandle, JigsawGameProps>(({
                          <Button asChild variant="outline" className="w-full sm:w-auto">
                            <Link href="/puzzles">More Puzzles</Link>
                         </Button>
-                        {slug && imageFilename && 
+                        {slug && imageFilename && imageSrc &&
                           <ShareButton 
                             slug={slug}
                             time={time}
@@ -731,5 +736,4 @@ const JigsawGame = forwardRef<GameActionsHandle, JigsawGameProps>(({
 });
 JigsawGame.displayName = "JigsawGame";
 export default JigsawGame;
-
     

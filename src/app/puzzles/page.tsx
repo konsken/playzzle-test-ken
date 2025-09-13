@@ -70,6 +70,7 @@ export default async function PuzzlesPage() {
   const user = await getAuthenticatedUser();
   const isSuperAdmin = !!user?.customClaims?.superadmin;
 
+  // Fetch all user data ONCE on the server
   const [categories, proStatus, unlocked, credits, wish] = await Promise.all([
     getCategories(),
     user ? getUserProStatus(user.uid) : Promise.resolve({ isPro: false }),
@@ -80,6 +81,7 @@ export default async function PuzzlesPage() {
   
   const categoriesWithPuzzles = await getPuzzlesForCategories(categories);
 
+  // Pass all user data as props to the client component
   const userData: UserDataState = user ? {
     isPro: proStatus.isPro,
     unlockedPuzzleIds: unlocked,
@@ -96,5 +98,4 @@ export default async function PuzzlesPage() {
     />
   );
 }
-
     

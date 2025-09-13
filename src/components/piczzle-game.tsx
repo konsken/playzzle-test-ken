@@ -211,7 +211,10 @@ const PiczzleGame = forwardRef<GameActionsHandle, PiczzleGameProps>(({
         start: startGame,
         stop: stopGame,
         pause: handlePause,
-        restart: startGame,
+        restart: () => {
+             hasRecordedCompletion.current = false;
+             startGame()
+        },
     }));
     
     useEffect(() => {
@@ -269,21 +272,23 @@ const PiczzleGame = forwardRef<GameActionsHandle, PiczzleGameProps>(({
     }, [getSolvedState]);
     
     useEffect(() => {
-        if (gameState === 'playing' && checkSolved(pieces) && !hasRecordedCompletion.current) {
-            hasRecordedCompletion.current = true; // Set flag immediately
-            setGameState('solved');
-            stopTimer();
-            updateBestTime(timeInSeconds);
-            setMotivationalMessage(motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)]);
-            if (slug && imageFilename) {
-                recordGameCompletion({
-                    puzzleSlug: slug,
-                    category: slug.split('/')[0],
-                    gameType: 'slide',
-                    difficulty: gridSize,
-                    timeInSeconds: timeInSeconds,
-                    moves: moves,
-                });
+        if (gameState === 'playing' && checkSolved(pieces)) {
+            if (!hasRecordedCompletion.current) {
+                hasRecordedCompletion.current = true; // Set flag immediately
+                setGameState('solved');
+                stopTimer();
+                updateBestTime(timeInSeconds);
+                setMotivationalMessage(motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)]);
+                if (slug && imageFilename) {
+                    recordGameCompletion({
+                        puzzleSlug: slug,
+                        category: slug.split('/')[0],
+                        gameType: 'slide',
+                        difficulty: gridSize,
+                        timeInSeconds: timeInSeconds,
+                        moves: moves,
+                    });
+                }
             }
         }
     }, [pieces, gameState, checkSolved, stopTimer, updateBestTime, timeInSeconds, slug, imageFilename, gridSize, moves]);
@@ -613,7 +618,7 @@ const PiczzleGame = forwardRef<GameActionsHandle, PiczzleGameProps>(({
                         <Button asChild variant="outline" className="w-full sm:w-auto">
                            <Link href="/puzzles">More Puzzles</Link>
                         </Button>
-                        {slug && imageFilename &&
+                        {slug && imageFilename && imageSrc &&
                           <ShareButton 
                             slug={slug}
                             time={time}
@@ -634,5 +639,4 @@ const PiczzleGame = forwardRef<GameActionsHandle, PiczzleGameProps>(({
 });
 PiczzleGame.displayName = "PiczzleGame";
 export default PiczzleGame;
-
     

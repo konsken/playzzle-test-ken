@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import PuzzleCard from '@/components/puzzle-card';
 import type { AuthenticatedUser } from '@/lib/firebase/server-auth';
 import type { UserDataState } from '@/app/puzzles/page';
@@ -22,6 +22,8 @@ type PuzzlesGridProps = {
   initialUserData: UserDataState;
 };
 
+// This is now a "dumb" component that just receives data.
+// It no longer fetches any data on its own, preventing loops.
 export function PuzzlesGrid({ initialPuzzles, user, isSuperAdmin, initialUserData }: PuzzlesGridProps) {
     if (initialPuzzles.length === 0) {
         return <p className="text-muted-foreground">No puzzles found in this category.</p>;
@@ -48,5 +50,4 @@ export function PuzzlesGrid({ initialPuzzles, user, isSuperAdmin, initialUserDat
         </div>
     );
 }
-
     
