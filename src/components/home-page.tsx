@@ -13,11 +13,10 @@ import {
 import { Button } from './ui/button';
 import { ArrowRight, Loader2, Pencil, Trash2 } from 'lucide-react';
 import type { AuthenticatedUser } from '@/lib/firebase/server-auth';
-import PuzzleCard, { type PuzzleImage } from './puzzle-card';
+import PuzzleCard from './puzzle-card';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { AdminControls } from './admin-controls';
 import { renameCategory, deleteCategory, checkAndReleaseDailyPuzzle } from '@/app/puzzles/actions';
-import { getSinglePuzzleCredits, getUserProStatus, getUnlockedPuzzles, getWishlist } from '@/app/account/actions';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -32,15 +31,7 @@ import {
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { useRouter } from 'next/navigation';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { getAuth } from 'firebase/auth';
-
-type UserData = {
-  isPro: boolean;
-  unlockedPuzzleIds: string[];
-  singlePurchaseCredits: { count: number; transactionIds: string[] };
-  wishlist: string[];
-} | null;
+import type { PuzzleImage, UserDataState } from '@/app/puzzles/page';
 
 type CategoryWithPuzzles = {
     name: string;
@@ -52,6 +43,7 @@ type HomePageProps = {
   categories: CategoryWithPuzzles[];
   isSuperAdmin: boolean;
   user: AuthenticatedUser | null;
+  initialUserData: UserDataState;
 };
 
 const INITIAL_CATEGORIES = 5;
@@ -195,82 +187,20 @@ function CategoryAdminActions({ category, onRename, onDelete }: { category: stri
     )
 }
 
-export default function HomePage({ categories: initialCategories, isSuperAdmin }: HomePageProps) {
+export default function HomePage({ categories: initialCategories, isSuperAdmin, user, initialUserData }: HomePageProps) {
   const [allCategories, setAllCategories] = useState(initialCategories);
   const [visibleCategories, setVisibleCategories] = useState(
     initialCategories.slice(0, INITIAL_CATEGORIES)
   );
   
-  const auth = getAuth();
-  const [user, authLoading] = useAuthState(auth);
-
-  const [userData, setUserData] = useState<UserData>(null);
-  const [isLoadingUserData, setIsLoadingUserData] = useState(true);
-  const dataFetchedRef = useRef(false);
-
-  // Trigger the daily puzzle check on the client side.
+  // The daily puzzle check is now triggered on the server in the page component.
+  // This useEffect can be kept for client-side-only effects if needed in the future.
   useEffect(() => {
-    // We only want to run this once on mount
     async function dailyCheck() {
-        // The server action handles revalidation, so no need to refresh here.
         await checkAndReleaseDailyPuzzle();
     }
     dailyCheck();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array ensures this runs only once on mount.
-
-  useEffect(() => {
-    async function fetchUserData() {
-      if (!user) {
-        setUserData({
-            isPro: false,
-            unlockedPuzzleIds: [],
-            singlePurchaseCredits: { count: 0, transactionIds: [] },
-            wishlist: [],
-        });
-        setIsLoadingUserData(false);
-        return;
-      }
-      try {
-        
-        const [
-          proStatus,
-          unlocked,
-          credits,
-          wish
-        ] = await Promise.all([
-          getUserProStatus(user.uid),
-          getUnlockedPuzzles(user.uid),
-          getSinglePuzzleCredits(user.uid),
-          getWishlist(user.uid),
-        ]);
-
-        setUserData({
-          isPro: proStatus.isPro,
-          unlockedPuzzleIds: unlocked,
-          singlePurchaseCredits: credits,
-          wishlist: wish,
-        });
-
-      } catch (error) {
-        console.error("Failed to fetch user data:", error);
-        setUserData({
-            isPro: false,
-            unlockedPuzzleIds: [],
-            singlePurchaseCredits: { count: 0, transactionIds: [] },
-            wishlist: [],
-        });
-      } finally {
-        setIsLoadingUserData(false);
-      }
-    }
-    
-    if (!authLoading && !dataFetchedRef.current) {
-      dataFetchedRef.current = true;
-      fetchUserData();
-    }
-  }, [user, authLoading]);
-
+  }, []); 
 
   const handleScroll = useCallback(() => {
     if (window.innerHeight + document.documentElement.scrollTop < document.documentElement.offsetHeight - 500) {
@@ -315,13 +245,14 @@ export default function HomePage({ categories: initialCategories, isSuperAdmin }
     )
   }
 
+  // User data is now passed directly as props, no client-side fetching needed.
   const userProps = {
-    user: user ? { uid: user.uid, email: user.email, name: user.displayName, picture: user.photoURL } : null,
+    user,
     isSuperAdmin,
-    isProUser: userData?.isPro || false,
-    unlockedPuzzleIds: userData?.unlockedPuzzleIds || [],
-    singlePurchaseCredits: userData?.singlePurchaseCredits || { count: 0, transactionIds: [] },
-    wishlist: userData?.wishlist || [],
+    isProUser: initialUserData?.isPro || false,
+    unlockedPuzzleIds: initialUserData?.unlockedPuzzleIds || [],
+    singlePurchaseCredits: initialUserData?.singlePurchaseCredits || { count: 0, transactionIds: [] },
+    wishlist: initialUserData?.wishlist || [],
   };
 
   return (
@@ -347,12 +278,7 @@ export default function HomePage({ categories: initialCategories, isSuperAdmin }
           </Card>
         </div>
         <div className="lg:col-span-3 space-y-8">
-          {isLoadingUserData ? (
-             <div className="flex justify-center items-center h-96">
-                <Loader2 className="w-12 h-12 animate-spin text-primary" />
-             </div>
-          ) : (
-            visibleCategories.map((category) => (
+          {visibleCategories.map((category) => (
               <div key={category.name} id={category.name} className="scroll-mt-20 relative">
                 <div className="flex justify-between items-center mb-4">
                    <h2 className="text-2xl font-bold capitalize">{formatCategoryName(category.name)}</h2>
@@ -368,7 +294,7 @@ export default function HomePage({ categories: initialCategories, isSuperAdmin }
                 <CategoryCarousel category={category.name} puzzles={category.puzzles} {...userProps} />
               </div>
             ))
-          )}
+          }
            {allCategories.length === 0 && isSuperAdmin && (
              <div className="text-center py-16 border-2 border-dashed rounded-lg">
                 <h2 className="text-xl font-semibold">No Categories Found</h2>
@@ -380,5 +306,3 @@ export default function HomePage({ categories: initialCategories, isSuperAdmin }
     </div>
   );
 }
-
-    

@@ -1,8 +1,8 @@
 
-
 import HomePage from '@/components/home-page';
 import { getCategories } from './actions';
 import { getAuthenticatedUser } from '@/lib/firebase/server-auth';
+import { getSinglePuzzleCredits, getUserProStatus, getUnlockedPuzzles, getWishlist } from '@/app/account/actions';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -20,6 +20,13 @@ type CategoryWithPuzzles = {
     displayOrder: number;
     puzzles: PuzzleImage[];
 }
+
+export type UserDataState = {
+  isPro: boolean;
+  unlockedPuzzleIds: string[];
+  singlePurchaseCredits: { count: number; transactionIds: string[] };
+  wishlist: string[];
+} | null;
 
 
 async function getPuzzlesForCategories(categories: {name: string, displayOrder: number}[]): Promise<CategoryWithPuzzles[]> {
@@ -60,16 +67,32 @@ async function getPuzzlesForCategories(categories: {name: string, displayOrder: 
 
 
 export default async function PuzzlesPage() {
-  const categories = await getCategories();
-  const categoriesWithPuzzles = await getPuzzlesForCategories(categories);
   const user = await getAuthenticatedUser();
   const isSuperAdmin = !!user?.customClaims?.superadmin;
+
+  const [categories, proStatus, unlocked, credits, wish] = await Promise.all([
+    getCategories(),
+    user ? getUserProStatus(user.uid) : Promise.resolve({ isPro: false }),
+    user ? getUnlockedPuzzles(user.uid) : Promise.resolve([]),
+    user ? getSinglePuzzleCredits(user.uid) : Promise.resolve({ count: 0, transactionIds: [] }),
+    user ? getWishlist(user.uid) : Promise.resolve([])
+  ]);
+  
+  const categoriesWithPuzzles = await getPuzzlesForCategories(categories);
+
+  const userData: UserDataState = user ? {
+    isPro: proStatus.isPro,
+    unlockedPuzzleIds: unlocked,
+    singlePurchaseCredits: credits,
+    wishlist: wish,
+  } : null;
 
   return (
     <HomePage 
         categories={categoriesWithPuzzles} 
         isSuperAdmin={isSuperAdmin} 
         user={user} 
+        initialUserData={userData}
     />
   );
 }

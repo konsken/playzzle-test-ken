@@ -441,5 +441,3 @@ export async function updateCategoryOrders(orders: { name: string; order: number
         return { success: false, message: 'Failed to update category orders.' };
     }
 }
-
-    

@@ -731,5 +731,3 @@ const JigsawGame = forwardRef<GameActionsHandle, JigsawGameProps>(({
 });
 JigsawGame.displayName = "JigsawGame";
 export default JigsawGame;
-
-    

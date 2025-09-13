@@ -635,5 +635,3 @@ const PiczzleGame = forwardRef<GameActionsHandle, PiczzleGameProps>(({
 });
 PiczzleGame.displayName = "PiczzleGame";
 export default PiczzleGame;
-
-    

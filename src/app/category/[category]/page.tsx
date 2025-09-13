@@ -1,11 +1,11 @@
 
-
 import fs from 'fs';
 import path from 'path';
 import { notFound } from 'next/navigation';
 import { PuzzlesGrid } from './puzzles-grid';
 import { getAuthenticatedUser } from '@/lib/firebase/server-auth';
-
+import { getSinglePuzzleCredits, getUserProStatus, getUnlockedPuzzles, getWishlist } from '@/app/account/actions';
+import type { UserDataState } from '@/app/puzzles/page';
 
 type CategoryPageProps = {
     params: {
@@ -67,7 +67,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     const user = await getAuthenticatedUser();
     const isSuperAdmin = !!user?.customClaims?.superadmin;
     
-    const puzzles = await getPuzzlesForCategory(decodedCategory, isSuperAdmin);
+    const [puzzles, proStatus, unlocked, credits, wish] = await Promise.all([
+        getPuzzlesForCategory(decodedCategory, isSuperAdmin),
+        user ? getUserProStatus(user.uid) : Promise.resolve({ isPro: false }),
+        user ? getUnlockedPuzzles(user.uid) : Promise.resolve([]),
+        user ? getSinglePuzzleCredits(user.uid) : Promise.resolve({ count: 0, transactionIds: [] }),
+        user ? getWishlist(user.uid) : Promise.resolve([])
+    ]);
 
     if (puzzles.length === 0 && !isSuperAdmin) {
         const categoryDir = path.join(process.cwd(), 'public', 'puzzles', decodedCategory);
@@ -76,10 +82,22 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         }
     }
     
+    const userData: UserDataState = user ? {
+        isPro: proStatus.isPro,
+        unlockedPuzzleIds: unlocked,
+        singlePurchaseCredits: credits,
+        wishlist: wish,
+    } : null;
+    
   return (
     <div className="container mx-auto py-8 px-4">
         <h1 className="text-3xl font-bold mb-8 capitalize">{formatCategoryName(decodedCategory)}</h1>
-        <PuzzlesGrid initialPuzzles={puzzles} />
+        <PuzzlesGrid 
+            initialPuzzles={puzzles} 
+            user={user}
+            isSuperAdmin={isSuperAdmin}
+            initialUserData={userData}
+        />
     </div>
   );
 }
