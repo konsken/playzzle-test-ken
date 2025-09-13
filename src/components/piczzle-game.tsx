@@ -176,7 +176,24 @@ const PiczzleGame = forwardRef<GameActionsHandle, PiczzleGameProps>(({
     
     const startGame = useCallback(() => {
         if (!imageSrc || !imageSize.width || !puzzleContainerRef.current) return;
-        hasRecordedCompletion.current = false; // Reset completion flag only on a new game start
+        hasRecordedCompletion.current = false;
+        updatePuzzleSize();
+        const solvedState = getSolvedState();
+        
+        let shuffled;
+        do {
+            shuffled = [...solvedState].sort(() => Math.random() - 0.5);
+        } while (!isSolvable(shuffled));
+        
+        setPieces(shuffled);
+        setMoves(0);
+        resetTimer();
+        startTimer();
+        setGameState('playing');
+    }, [getSolvedState, isSolvable, resetTimer, startTimer, imageSrc, imageSize.width, updatePuzzleSize]);
+
+    const restartGame = useCallback(() => {
+        if (!imageSrc || !imageSize.width || !puzzleContainerRef.current) return;
         updatePuzzleSize();
         const solvedState = getSolvedState();
         
@@ -211,10 +228,7 @@ const PiczzleGame = forwardRef<GameActionsHandle, PiczzleGameProps>(({
         start: startGame,
         stop: stopGame,
         pause: handlePause,
-        restart: () => {
-             hasRecordedCompletion.current = false;
-             startGame()
-        },
+        restart: restartGame,
     }));
     
     useEffect(() => {
@@ -614,7 +628,7 @@ const PiczzleGame = forwardRef<GameActionsHandle, PiczzleGameProps>(({
                         </div>
                     )}
                     <DialogFooter className="sm:justify-center flex-col sm:flex-row gap-2">
-                        <Button onClick={startGame} className="w-full sm:w-auto">Play Again</Button>
+                        <Button onClick={restartGame} className="w-full sm:w-auto">Play Again</Button>
                         <Button asChild variant="outline" className="w-full sm:w-auto">
                            <Link href="/puzzles">More Puzzles</Link>
                         </Button>

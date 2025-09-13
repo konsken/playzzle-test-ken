@@ -229,7 +229,11 @@ const JigsawGame = forwardRef<GameActionsHandle, JigsawGameProps>(({
     };
     
     const startGame = useCallback(() => {
-        hasRecordedCompletion.current = false; // Reset completion flag only on a new game start
+        hasRecordedCompletion.current = false;
+        createPuzzle(true);
+    }, [createPuzzle]);
+
+    const restartGame = useCallback(() => {
         createPuzzle(true);
     }, [createPuzzle]);
 
@@ -253,10 +257,7 @@ const JigsawGame = forwardRef<GameActionsHandle, JigsawGameProps>(({
         start: startGame,
         stop: stopGame,
         pause: handlePause,
-        restart: () => {
-             hasRecordedCompletion.current = false;
-             createPuzzle(true)
-        },
+        restart: restartGame,
     }));
     
     useEffect(() => {
@@ -711,7 +712,7 @@ const JigsawGame = forwardRef<GameActionsHandle, JigsawGameProps>(({
                         </div>
                     )}
                     <DialogFooter className="sm:justify-center flex-col sm:flex-row gap-2">
-                        <Button onClick={startGame} className="w-full sm:w-auto">Play Again</Button>
+                        <Button onClick={restartGame} className="w-full sm:w-auto">Play Again</Button>
                          <Button asChild variant="outline" className="w-full sm:w-auto">
                            <Link href="/puzzles">More Puzzles</Link>
                         </Button>
